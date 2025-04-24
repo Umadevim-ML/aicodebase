@@ -2,59 +2,247 @@ import React from 'react';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card, CardContent } from '../components/ui/Card';
-import { FcGoogle } from 'react-icons/fc';
-import { FaFacebook } from 'react-icons/fa';
 import { motion } from 'framer-motion';
-import graphic from '../assets/ai_graphic.png';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
+const LoginPage = () => {
+  const navigate = useNavigate();
+  
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.15,
+      }
+    }
+  };
 
-const LoginPage = () => (
-  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-600 to-purple-500 p-4">
-    <div className="grid md:grid-cols-2 bg-white rounded-2xl shadow-2xl overflow-hidden max-w-4xl">
-      <Card className="rounded-none">
-        <CardContent>
-          <h2 className="text-3xl font-bold text-gray-800 text-center">Log In</h2>
-          <p className="text-center text-gray-500 mt-2 mb-6">
-            Access AI Vulnerability Detector
-          </p>
-          <div className="space-y-4">
-            <Input placeholder="Username" />
-            <Input type="password" placeholder="Password" />
-            <Button className="w-full bg-indigo-600 text-white hover:bg-indigo-700">
-              Login Now
-            </Button>
-          </div>
-          <p className="text-center text-gray-400 my-4">Or login with</p>
-          <div className="space-y-2">
-            <Button className="w-full border flex items-center justify-center gap-2">
-              <FcGoogle size={20} /> Google
-            </Button>
-            <Button className="w-full border flex items-center justify-center gap-2">
-              <FaFacebook size={20} /> Facebook
-            </Button>
-            <p className="text-center text-sm text-gray-500 mt-4">
-  Don’t have an account?{' '}
-  <Link to="/signup" className="text-indigo-600 hover:underline font-medium">
-    Sign up
-  </Link>
-</p>
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 10
+      }
+    }
+  };
 
-          </div>
-        </CardContent>
-      </Card>
-      <div className="relative bg-gradient-to-bl from-purple-600 to-indigo-600 flex items-center justify-center">
-        <motion.img
-          src={graphic}
-          alt="AI Graphic"
-          className="w-full h-auto object-contai"
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 3, x: 0 }}
-          transition={{ duration: 0.6 }}
-        />
+  const gradientRingVariants = {
+    initial: { rotate: 0 },
+    animate: {
+      rotate: 360,
+      transition: {
+        duration: 18,
+        repeat: Infinity,
+        ease: "linear"
+      }
+    }
+  };
+
+  const floatingOrbVariants = {
+    float: {
+      y: ["0%", "-15%", "0%"],
+      transition: {
+        duration: 6,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }
+    },
+    pulse: {
+      scale: [1, 1.05, 1],
+      transition: {
+        duration: 4,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }
+    }
+  };
+
+  // Login handler function
+  const handleLogin = (e) => {
+    e.preventDefault();
+    const username = e.target.elements.username.value;
+    const password = e.target.elements.password.value;
+    
+    // Get users from localStorage
+    const users = JSON.parse(localStorage.getItem('users')) || [];
+    
+    // Find user by username
+    const user = users.find(u => u.username === username || u.email === username);
+    
+    if (user && user.password === password) {
+      // Store current user in localStorage
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      // Redirect to dashboard
+      navigate('/dashboard');
+    } else {
+      alert('Invalid credentials!');
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 to-purple-900 p-4">
+      <div className="grid md:grid-cols-2 bg-white/5 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden max-w-5xl w-full border border-white/10">
+        {/* Form Section */}
+        <Card className="rounded-none p-10 bg-gradient-to-br from-gray-900 to-gray-800 border-r border-white/10">
+          <CardContent className="flex flex-col h-full justify-center">
+            <motion.form
+              onSubmit={handleLogin}
+              initial="hidden"
+              animate="visible"
+              variants={containerVariants}
+              className="space-y-6"
+            >
+              <motion.h2 
+                variants={itemVariants} 
+                className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 text-center"
+              >
+                Welcome Back
+              </motion.h2>
+              
+              <motion.p variants={itemVariants} className="text-center text-gray-300 mb-8">
+                Secure access to your AI defense system
+              </motion.p>
+              
+              <motion.div variants={itemVariants}>
+                <Input 
+                  name="username"
+                  placeholder="Username" 
+                  className="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                />
+              </motion.div>
+              
+              <motion.div variants={itemVariants}>
+                <Input 
+                  name="password"
+                  type="password" 
+                  placeholder="Password" 
+                  className="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                />
+              </motion.div>
+              
+              <motion.div variants={itemVariants}>
+                <Button 
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-cyan-600 to-purple-600 text-white hover:from-cyan-500 hover:to-purple-500 py-3 shadow-lg shadow-cyan-500/20"
+                >
+                  Authenticate
+                </Button>
+              </motion.div>
+              
+              <motion.p 
+                variants={itemVariants} 
+                className="text-center text-sm text-gray-400 mt-8"
+              >
+                New to the system?{' '}
+                <Link 
+                  to="/signup" 
+                  className="text-cyan-400 hover:text-cyan-300 font-medium underline underline-offset-4"
+                >
+                  Request access
+                </Link>
+              </motion.p>
+            </motion.form>
+          </CardContent>
+        </Card>
+
+        {/* Animation Section */}
+        <div className="hidden md:flex items-center justify-center p-10 relative overflow-hidden">
+          {/* Background Gradient */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-cyan-900/30 via-purple-900/50 to-indigo-900/30" />
+          
+          {/* Floating Orbs */}
+          <motion.div
+            className="absolute top-1/4 left-1/4 w-12 h-12 rounded-full bg-cyan-400/20 blur-xl"
+            variants={floatingOrbVariants}
+            animate="float"
+          />
+          <motion.div
+            className="absolute bottom-1/3 right-1/3 w-16 h-16 rounded-full bg-purple-400/20 blur-xl"
+            variants={floatingOrbVariants}
+            animate="float"
+          />
+          
+          {/* Main Animation */}
+          <motion.div 
+            className="relative w-64 h-64"
+            variants={floatingOrbVariants}
+            animate="pulse"
+          >
+            {/* Gradient Ring */}
+            <motion.div
+              className="absolute inset-0 rounded-full border-4 border-transparent"
+              style={{
+                background: 'conic-gradient(from 0deg, transparent, #00e0ff, #a200ff, transparent)',
+                mask: 'linear-gradient(#fff, #fff) padding-box, linear-gradient(#fff, #fff)',
+                maskComposite: 'exclude'
+              }}
+              variants={gradientRingVariants}
+              initial="initial"
+              animate="animate"
+            />
+            
+            {/* Inner Ring */}
+            <motion.div
+              className="absolute inset-8 rounded-full border-2 border-cyan-400/30"
+              animate={{
+                rotate: -360,
+                transition: {
+                  duration: 24,
+                  repeat: Infinity,
+                  ease: "linear"
+                }
+              }}
+            />
+            
+            {/* Core */}
+            <div className="absolute inset-16 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center">
+              <motion.div
+                animate={{
+                  scale: [1, 1.1, 1],
+                  opacity: [0.8, 1, 0.8]
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity
+                }}
+                className="text-white text-lg font-bold"
+              >
+                AI
+              </motion.div>
+            </div>
+            
+            {/* Floating Particles */}
+            {[...Array(8)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-2 h-2 rounded-full bg-white"
+                style={{
+                  top: `${Math.sin(i * Math.PI / 4) * 70 + 50}%`,
+                  left: `${Math.cos(i * Math.PI / 4) * 70 + 50}%`,
+                }}
+                animate={{
+                  y: [0, -15, 0],
+                  opacity: [0.4, 1, 0.4],
+                  scale: [1, 1.5, 1]
+                }}
+                transition={{
+                  duration: 3 + Math.random() * 2,
+                  repeat: Infinity,
+                  delay: i * 0.3
+                }}
+              />
+            ))}
+          </motion.div>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default LoginPage;
