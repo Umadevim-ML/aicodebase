@@ -8,7 +8,7 @@ import { Link, useNavigate } from 'react-router-dom';
 const LoginPage = () => {
   const navigate = useNavigate();
   
-  // Animation variants
+  // Animation variants (keep all existing animation code exactly the same)
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -63,28 +63,58 @@ const LoginPage = () => {
     }
   };
 
-  // Login handler function
-  const handleLogin = (e) => {
+  // Updated login handler to use backend API
+  const handleLogin = async (e) => {
     e.preventDefault();
-    const username = e.target.elements.username.value;
+    const email = e.target.elements.username.value; // Change variable name for clarity
     const password = e.target.elements.password.value;
-    
-    // Get users from localStorage
-    const users = JSON.parse(localStorage.getItem('users')) || [];
-    
-    // Find user by username
-    const user = users.find(u => u.username === username || u.email === username);
-    
-    if (user && user.password === password) {
-      // Store current user in localStorage
-      localStorage.setItem('currentUser', JSON.stringify(user));
-      // Redirect to dashboard
+  
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(), // Normalize email
+          password
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        // Enhanced error message from server
+        throw new Error(data.error || data.message || `Login failed: ${response.statusText}`);
+      }
+  
+      // Verify response structure
+      if (!data.token || !data._id) {
+        throw new Error('Invalid server response - missing auth data');
+      }
+  
+      // Store auth data
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify({
+        _id: data._id,
+        email: data.email
+      }));
+      
       navigate('/dashboard');
-    } else {
-      alert('Invalid credentials!');
+  
+    } catch (error) {
+      console.error('Login error:', error);
+      alert(error.message.includes('credentials') 
+        ? 'Invalid email or password' 
+        : 'Login failed. Please try again.'
+      );
+      // Clear any partial auth data
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
     }
   };
 
+  // Keep all the existing JSX exactly the same
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 to-purple-900 p-4">
       <div className="grid md:grid-cols-2 bg-white/5 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden max-w-5xl w-full border border-white/10">
@@ -112,7 +142,7 @@ const LoginPage = () => {
               <motion.div variants={itemVariants}>
                 <Input 
                   name="username"
-                  placeholder="Username" 
+                  placeholder="Email" 
                   className="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
                 />
               </motion.div>

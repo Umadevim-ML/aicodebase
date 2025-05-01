@@ -4,9 +4,10 @@ import { Input } from '../components/ui/Input';
 import { Card, CardContent } from '../components/ui/Card';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const SignupPage = () => {
-  // Animation variants
+  // Animation variants (keep all existing animation code exactly the same)
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -16,6 +17,7 @@ const SignupPage = () => {
       }
     }
   };
+  const navigate = useNavigate();
 
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
@@ -53,47 +55,59 @@ const SignupPage = () => {
     })
   };
 
-  // Handle form submission
-  const handleSignup = (e) => {
+  // Updated handleSignup to connect with your backend
+  const handleSignup = async (e) => {
     e.preventDefault();
     
-    // Get form data
-    const formData = new FormData(e.target);
-    const userData = {
-      fullName: formData.get('fullName'),
-      email: formData.get('email'),
-      username: formData.get('email'), // Using email as username for login
-      password: formData.get('password'),
-      createdAt: new Date().toISOString()
+    const formData = {
+      email: e.target.elements.email.value.trim().toLowerCase(),
+      password: e.target.elements.password.value,
+      fullName: e.target.elements.fullName.value.trim()
     };
-    
-    // Get existing users from localStorage
-    const existingUsers = JSON.parse(localStorage.getItem('users')) || [];
-    
-    // Check if user already exists
-    const userExists = existingUsers.some(user => user.email === userData.email);
-    
-    if (userExists) {
-      alert('User with this email already exists!');
-      return;
+  
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+  
+      const result = await response.json();
+  
+      console.log('Full server response:', result); // Debug log
+  
+      if (!response.ok) {
+        throw new Error(result.message || result.error || 'Registration failed');
+      }
+  
+      // Verify the response structure matches what you expect
+      if (!result.token || !result.data?._id) {
+        throw new Error('Server response missing required fields');
+      }
+  
+      // Store auth data
+      localStorage.setItem('token', result.token);
+      localStorage.setItem('user', JSON.stringify({
+        _id: result.data._id,
+        email: result.data.email,
+        username: result.data.username
+      }));
+  
+      navigate('/survey');
+  
+    } catch (error) {
+      console.error('Signup error:', error);
+      alert(error.message || 'Registration failed. Please try again.');
+      // Clear any partial auth data
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
     }
-    
-    // Check if passwords match
-    if (formData.get('password') !== formData.get('confirmPassword')) {
-      alert('Passwords do not match!');
-      return;
-    }
-    
-    // Add new user
-    const updatedUsers = [...existingUsers, userData];
-    localStorage.setItem('users', JSON.stringify(updatedUsers));
-    
-    // Store current user and redirect (optional)
-    localStorage.setItem('currentUser', JSON.stringify(userData));
-    alert('Registration successful! You can now login.');
-    // window.location.href = '/'; // Redirect to login page
   };
+  
 
+  // Keep all the existing JSX exactly the same
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 to-purple-900 p-4">
       <div className="grid md:grid-cols-2 bg-white/5 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden max-w-5xl w-full border border-white/10">
@@ -110,7 +124,7 @@ const SignupPage = () => {
             <div className="absolute inset-0 flex justify-center">
               <div className="w-1 h-full bg-gradient-to-b from-cyan-400 to-purple-400" />
             </div>
-            
+
             {/* DNA Nodes */}
             {[...Array(12)].map((_, i) => (
               <React.Fragment key={i}>
@@ -136,7 +150,7 @@ const SignupPage = () => {
                 />
               </React.Fragment>
             ))}
-            
+
             {/* Floating Tech Elements */}
             <div className="absolute inset-0 flex items-center justify-center">
               <motion.div
@@ -154,7 +168,7 @@ const SignupPage = () => {
               </motion.div>
             </div>
           </motion.div>
-          
+
           {/* Floating Particles */}
           {[...Array(20)].map((_, i) => (
             <motion.div
@@ -181,7 +195,7 @@ const SignupPage = () => {
           ))}
         </div>
 
-        {/* Form Section - Changed to form element with onSubmit */}
+        {/* Form Section */}
         <Card className="rounded-none p-10 bg-gradient-to-br from-gray-900 to-gray-800 border-l border-white/10">
           <CardContent className="flex flex-col h-full justify-center">
             <motion.form
@@ -191,74 +205,74 @@ const SignupPage = () => {
               variants={containerVariants}
               className="space-y-6"
             >
-              <motion.h2 
-                variants={itemVariants} 
+              <motion.h2
+                variants={itemVariants}
                 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 text-center"
               >
                 Join Our Network
               </motion.h2>
-              
+
               <motion.p variants={itemVariants} className="text-center text-gray-300 mb-8">
                 Create your secure access credentials
               </motion.p>
-              
+
               <motion.div variants={itemVariants}>
-                <Input 
+                <Input
                   name="fullName"
-                  placeholder="Full Name" 
-                  className="bg-gray-800 border-gray-700 text-white" 
+                  placeholder="Full Name"
+                  className="bg-gray-800 border-gray-700 text-white"
                   required
                 />
               </motion.div>
-              
+
               <motion.div variants={itemVariants}>
-                <Input 
+                <Input
                   name="email"
-                  type="email" 
-                  placeholder="Email Address" 
-                  className="bg-gray-800 border-gray-700 text-white" 
+                  type="email"
+                  placeholder="Email Address"
+                  className="bg-gray-800 border-gray-700 text-white"
                   required
                 />
               </motion.div>
-              
+
               <motion.div variants={itemVariants}>
-                <Input 
+                <Input
                   name="password"
-                  type="password" 
-                  placeholder="Password" 
-                  className="bg-gray-800 border-gray-700 text-white" 
+                  type="password"
+                  placeholder="Password"
+                  className="bg-gray-800 border-gray-700 text-white"
                   required
                   minLength="6"
                 />
               </motion.div>
-              
+
               <motion.div variants={itemVariants}>
-                <Input 
+                <Input
                   name="confirmPassword"
-                  type="password" 
-                  placeholder="Confirm Password" 
-                  className="bg-gray-800 border-gray-700 text-white" 
+                  type="password"
+                  placeholder="Confirm Password"
+                  className="bg-gray-800 border-gray-700 text-white"
                   required
                   minLength="6"
                 />
               </motion.div>
-              
+
               <motion.div variants={itemVariants}>
-                <Button 
+                <Button
                   type="submit"
                   className="w-full bg-gradient-to-r from-cyan-600 to-purple-600 text-white hover:from-cyan-500 hover:to-purple-500 py-3 shadow-lg shadow-cyan-500/20"
                 >
                   Register Now
                 </Button>
               </motion.div>
-              
-              <motion.p 
-                variants={itemVariants} 
+
+              <motion.p
+                variants={itemVariants}
                 className="text-center text-sm text-gray-400 mt-8"
               >
                 Already have credentials?{' '}
-                <Link 
-                  to="/" 
+                <Link
+                  to="/"
                   className="text-cyan-400 hover:text-cyan-300 font-medium underline underline-offset-4"
                 >
                   Login here
