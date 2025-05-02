@@ -13,83 +13,50 @@ const EducationSurvey = () => {
     codingLevel: '',
     strongLanguages: []
   });
-  const [isSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [activeInput, setActiveInput] = useState(null);
   const [progress, setProgress] = useState(0);
 
-  // Calculate form progress
-  useEffect(() => {
-    let filled = 0;
-    if (formData.educationLevel) filled++;
-    if (formData.standard) filled++;
-    if (formData.codingLevel) filled++;
-    setProgress((filled / 3) * 100);
-  }, [formData]);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    setError(null);
-    controls.start({
-      scale: [1, 1.02, 1],
-      transition: { duration: 0.3 }
-    });
+  // Binary code rain component
+  const BinaryRain = () => {
+    const columns = 15;
+    const binary = ['0', '1'];
+    
+    return (
+      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-10">
+        {Array(columns).fill(0).map((_, col) => (
+          <motion.div 
+            key={col}
+            className="absolute top-0 text-cyan-400 text-xs font-mono"
+            style={{
+              left: `${(100 / columns) * col}%`,
+              animationDelay: `${Math.random() * 2}s`
+            }}
+            initial={{ y: -100 }}
+            animate={{ y: '100vh' }}
+            transition={{
+              duration: 5 + Math.random() * 15,
+              repeat: Infinity,
+              delay: Math.random() * 2,
+              ease: "linear"
+            }}
+          >
+            {Array(20).fill(0).map((_, row) => (
+              <div key={row} className="my-1 opacity-70">
+                {binary[Math.floor(Math.random() * 2)]}
+              </div>
+            ))}
+          </motion.div>
+        ))}
+      </div>
+    );
   };
 
-  const handleLanguageSelect = (language) => {
-    setFormData(prev => {
-      const languages = [...prev.strongLanguages];
-      const index = languages.indexOf(language);
-      if (index === -1) {
-        languages.push(language);
-      } else {
-        languages.splice(index, 1);
-      }
-      return { ...prev, strongLanguages: languages };
-    });
-    setError(null);
-    controls.start("pulse");
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const payload = {
-        ...formData,
-        userId: JSON.parse(localStorage.getItem('user'))._id
-      };
-      const response = await fetch('http://localhost:5000/api/edu-details', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(payload)
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Submission failed');
-      }
-      await response.json();
-      navigate('/');
-    } catch (error) {
-      setError(error.message || 'Submission failed. Please try again.');
-    }
-  };
-
-  const programmingLanguages = [
-    'C', 'C++', 'Java', 'Python', 'JavaScript',
-    'C#', 'Ruby', 'Go', 'Swift', 'Kotlin',
-    'PHP', 'TypeScript', 'Rust', 'Dart'
+  // Floating tech icons
+  const techIcons = [
+    '👨‍💻', '📚', '💻', '📱', '🔌', '📊', '🧮', '🔢', '🧠', '⚡'
   ];
-
-  const educationOptions = {
-    school: ['9th Grade', '10th Grade', '11th Grade', '12th Grade'],
-    college: ['1st Year', '2nd Year', '3rd Year', '4th Year'],
-    university: ['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year+'],
-    other: ['Other']
-  };
 
   // Floating particles configuration
   const particles = Array(40).fill(0).map((_, i) => ({
@@ -162,45 +129,121 @@ const EducationSurvey = () => {
     }
   };
 
-  // Binary code rain component
-  const BinaryRain = () => {
-    const columns = 15;
-    const binary = ['0', '1'];
-    
-    return (
-      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-10">
-        {Array(columns).fill(0).map((_, col) => (
-          <motion.div 
-            key={col}
-            className="absolute top-0 text-cyan-400 text-xs font-mono"
-            style={{
-              left: `${(100 / columns) * col}%`,
-              animationDelay: `${Math.random() * 2}s`
-            }}
-            initial={{ y: -100 }}
-            animate={{ y: '100vh' }}
-            transition={{
-              duration: 5 + Math.random() * 15,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-              ease: "linear"
-            }}
-          >
-            {Array(20).fill(0).map((_, row) => (
-              <div key={row} className="my-1 opacity-70">
-                {binary[Math.floor(Math.random() * 2)]}
-              </div>
-            ))}
-          </motion.div>
-        ))}
-      </div>
-    );
+  const programmingLanguages = [
+    'C', 'C++', 'Java', 'Python', 'JavaScript',
+    'C#', 'Ruby', 'Go', 'Swift', 'Kotlin',
+    'PHP', 'TypeScript', 'Rust', 'Dart'
+  ];
+
+  const educationOptions = {
+    school: ['9th Grade', '10th Grade', '11th Grade', '12th Grade'],
+    college: ['1st Year', '2nd Year', '3rd Year', '4th Year'],
+    university: ['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year+'],
+    other: ['Other']
   };
 
-  // Floating tech icons
-  const techIcons = [
-    '👨‍💻', '📚', '💻', '📱', '🔌', '📊', '🧮', '🔢', '🧠', '⚡'
-  ];
+  // Calculate form progress
+  useEffect(() => {
+    let filled = 0;
+    if (formData.educationLevel) filled++;
+    if (formData.standard) filled++;
+    if (formData.codingLevel) filled++;
+    setProgress((filled / 3) * 100);
+  }, [formData]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    setError(null);
+    controls.start({
+      scale: [1, 1.02, 1],
+      transition: { duration: 0.3 }
+    });
+  };
+
+  const handleLanguageSelect = (language) => {
+    setFormData(prev => {
+      const languages = [...prev.strongLanguages];
+      const index = languages.indexOf(language);
+      if (index === -1) {
+        languages.push(language);
+      } else {
+        languages.splice(index, 1);
+      }
+      return { ...prev, strongLanguages: languages };
+    });
+    setError(null);
+    controls.start("pulse");
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+    
+    try {
+      // Validate required fields
+      if (!formData.educationLevel || !formData.standard || !formData.codingLevel) {
+        throw new Error('Please fill all required fields');
+      }
+  
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication token not found. Please login again.');
+      }
+  
+      const payload = {
+        educationLevel: formData.educationLevel,
+        standard: formData.standard,
+        codingLevel: formData.codingLevel,
+        strongLanguages: formData.strongLanguages
+      };
+  
+      const response = await fetch('http://localhost:5000/api/edu-details', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        // Handle specific error messages from backend
+        if (data.error === 'User not found') {
+          // Clear invalid token and redirect to login
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          navigate('/', { state: { from: '/education-survey', message: 'Session expired. Please login again.' } });
+          return;
+        }
+        throw new Error(data.error || data.message || 'Failed to submit survey');
+      }
+  
+      // Success - redirect to dashboard
+      navigate('/dashboard', { 
+        state: { 
+          surveyCompleted: true,
+          message: 'Profile completed successfully!' 
+        } 
+      });
+  
+    } catch (error) {
+      console.error('Survey submission error:', error);
+      setError(error.message || 'Failed to submit survey. Please try again.');
+      
+      // If unauthorized, clear storage and redirect to login
+      if (error.message.includes('token') || error.message.includes('auth') || error.message.includes('User not found')) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/', { state: { from: '/education-survey', message: 'Session expired. Please login again.' } });
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900 p-4 overflow-hidden relative">

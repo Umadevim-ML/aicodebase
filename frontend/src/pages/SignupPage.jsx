@@ -7,7 +7,6 @@ import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 
 const SignupPage = () => {
-  // Animation variants (keep all existing animation code exactly the same)
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -55,15 +54,46 @@ const SignupPage = () => {
     })
   };
 
-  // Updated handleSignup to connect with your backend
   const handleSignup = async (e) => {
     e.preventDefault();
-    
-    const formData = {
-      email: e.target.elements.email.value.trim().toLowerCase(),
-      password: e.target.elements.password.value,
-      fullName: e.target.elements.fullName.value.trim()
-    };
+  
+    const form = e.target;
+    const email = form.elements.email.value.trim().toLowerCase();
+    const password = form.elements.password.value;
+    const confirmPassword = form.elements.confirmPassword.value;
+    const username = form.elements.username.value.trim();
+  
+    // Password match validation
+    if (password !== confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+  
+    // Password strength validation
+    const passwordPattern = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
+    if (!passwordPattern.test(password)) {
+      alert("Password must contain at least one number, one uppercase letter, one lowercase letter, and be at least 8 characters long.");
+      return;
+    }
+  
+    // Email validation
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+      alert('Please enter a valid email address');
+      return;
+    }
+  
+    // Username validation
+    const usernamePattern = /^[a-zA-Z0-9_]+$/;
+    if (!usernamePattern.test(username)) {
+      alert('Username can only contain letters, numbers, and underscores');
+      return;
+    }
+  
+    if (username.length < 3) {
+      alert('Username must be at least 3 characters long');
+      return;
+    }
   
     try {
       const response = await fetch('http://localhost:5000/api/auth/signup', {
@@ -71,43 +101,43 @@ const SignupPage = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          username,
+          email,
+          password
+        }),
       });
   
-      const result = await response.json();
-  
-      console.log('Full server response:', result); // Debug log
+      const data = await response.json();
   
       if (!response.ok) {
-        throw new Error(result.message || result.error || 'Registration failed');
+        // Handle validation errors from backend
+        if (data.errors) {
+          const errorMessages = Object.values(data.errors).join('\n');
+          alert(`Validation errors:\n${errorMessages}`);
+        } else {
+          alert(data.message || data.error || 'Registration failed');
+        }
+        return;
       }
   
-      // Verify the response structure matches what you expect
-      if (!result.token || !result.data?._id) {
-        throw new Error('Server response missing required fields');
+      // Check if response contains required fields
+      if (!data.token || !data.data) {
+        throw new Error('Invalid server response');
       }
   
-      // Store auth data
-      localStorage.setItem('token', result.token);
-      localStorage.setItem('user', JSON.stringify({
-        _id: result.data._id,
-        email: result.data.email,
-        username: result.data.username
-      }));
+      // Save token and user data
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.data));
   
+      // Redirect to survey page
       navigate('/survey');
-  
     } catch (error) {
       console.error('Signup error:', error);
-      alert(error.message || 'Registration failed. Please try again.');
-      // Clear any partial auth data
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      alert(error.message || 'An error occurred during registration. Please try again.');
     }
   };
-  
 
-  // Keep all the existing JSX exactly the same
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 to-purple-900 p-4">
       <div className="grid md:grid-cols-2 bg-white/5 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden max-w-5xl w-full border border-white/10">
@@ -218,10 +248,13 @@ const SignupPage = () => {
 
               <motion.div variants={itemVariants}>
                 <Input
-                  name="fullName"
-                  placeholder="Full Name"
+                  name="username"
+                  placeholder="Username"
                   className="bg-gray-800 border-gray-700 text-white"
                   required
+                  minLength="3"
+                  pattern="[a-zA-Z0-9_]+"
+                  title="Username can only contain letters, numbers, and underscores"
                 />
               </motion.div>
 
@@ -242,7 +275,9 @@ const SignupPage = () => {
                   placeholder="Password"
                   className="bg-gray-800 border-gray-700 text-white"
                   required
-                  minLength="6"
+                  minLength="8"
+                  pattern="^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$"
+                  title="Must contain at least one number, one uppercase and lowercase letter, and at least 8 characters"
                 />
               </motion.div>
 
@@ -253,7 +288,7 @@ const SignupPage = () => {
                   placeholder="Confirm Password"
                   className="bg-gray-800 border-gray-700 text-white"
                   required
-                  minLength="6"
+                  minLength="8"
                 />
               </motion.div>
 

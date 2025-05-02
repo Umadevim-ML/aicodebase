@@ -4,10 +4,11 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const { protect } = require('../middleware/authMiddleware');
 
-// Signup route - Updated response format
+// ✅ Signup route
+// ✅ Signup route
 router.post('/signup', async (req, res) => {
   try {
-    const { email, password, fullName } = req.body;
+    const { email, password, username } = req.body;
 
     // Check if user exists
     const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
@@ -19,18 +20,17 @@ router.post('/signup', async (req, res) => {
       });
     }
 
-    // Create user
+    // Create new user
     const user = await User.create({
-      username: email.toLowerCase().trim(),
+      username: username.trim(),
       email: email.toLowerCase().trim(),
       password,
-      fullName: fullName.trim()
     });
 
-    // Generate token
+    // Generate JWT token
     const token = user.generateAuthToken();
 
-    // Return consistent response structure
+    // Return success response
     res.status(201).json({
       success: true,
       message: 'Registration successful',
@@ -45,8 +45,7 @@ router.post('/signup', async (req, res) => {
 
   } catch (err) {
     console.error('Signup error:', err);
-    
-    // Handle validation errors
+
     if (err.name === 'ValidationError') {
       const errors = {};
       Object.keys(err.errors).forEach(key => {
@@ -66,51 +65,38 @@ router.post('/signup', async (req, res) => {
   }
 });
 
-// Login route - Updated response format
-// auth.js - Login route
+
+// ✅ Login route
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
   try {
     const user = await User.findOne({ email: email.toLowerCase().trim() })
-                         .select('+password');
+                           .select('+password');
 
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        error: 'Invalid credentials',
-        field: 'email'
-      });
-    }
-
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        error: 'Invalid credentials', 
-        field: 'password'
-      });
+    if (!user || !(await user.comparePassword(password))) {
+      return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
 
     const token = user.generateAuthToken();
-    
+
     res.json({
       success: true,
       token,
-      _id: user._id,
-      email: user.email
+      user: {
+        _id: user._id,
+        username: user.username,
+        email: user.email
+      }
     });
 
   } catch (err) {
     console.error('Login error:', err);
-    res.status(500).json({
-      success: false,
-      error: 'Server error during login'
-    });
+    res.status(500).json({ success: false, error: 'Server error during login' });
   }
 });
 
-// Protected route - unchanged
+// ✅ Protected route (example)
 router.get('/me', protect, async (req, res) => {
   res.json({
     success: true,

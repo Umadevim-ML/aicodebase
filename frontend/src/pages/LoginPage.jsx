@@ -7,7 +7,7 @@ import { Link, useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  
+
   // Animation variants (keep all existing animation code exactly the same)
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -66,53 +66,38 @@ const LoginPage = () => {
   // Updated login handler to use backend API
   const handleLogin = async (e) => {
     e.preventDefault();
-    const email = e.target.elements.username.value; // Change variable name for clarity
+    const email = e.target.elements.username.value;
     const password = e.target.elements.password.value;
   
     try {
       const response = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email.trim().toLowerCase(), // Normalize email
-          password
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
       });
   
       const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Login failed");
   
-      if (!response.ok) {
-        // Enhanced error message from server
-        throw new Error(data.error || data.message || `Login failed: ${response.statusText}`);
-      }
-  
-      // Verify response structure
-      if (!data.token || !data._id) {
-        throw new Error('Invalid server response - missing auth data');
-      }
-  
-      // Store auth data
+      // ✅ Only save token (user data will come from /me later)
       localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify({
-        _id: data._id,
-        email: data.email
-      }));
+      
+      // Fetch user data separately (using the protected /me route)
+      const userResponse = await fetch('http://localhost:5000/api/auth/me', {
+        headers: { 'Authorization': `Bearer ${data.token}` }
+      });
+      const userData = await userResponse.json();
+      
       
       navigate('/dashboard');
   
     } catch (error) {
-      console.error('Login error:', error);
-      alert(error.message.includes('credentials') 
-        ? 'Invalid email or password' 
-        : 'Login failed. Please try again.'
-      );
-      // Clear any partial auth data
+      console.error("Login error:", error);
+      alert(error.message);
       localStorage.removeItem('token');
-      localStorage.removeItem('user');
     }
   };
+  
 
   // Keep all the existing JSX exactly the same
   return (
@@ -128,50 +113,50 @@ const LoginPage = () => {
               variants={containerVariants}
               className="space-y-6"
             >
-              <motion.h2 
-                variants={itemVariants} 
+              <motion.h2
+                variants={itemVariants}
                 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 text-center"
               >
                 Welcome Back
               </motion.h2>
-              
+
               <motion.p variants={itemVariants} className="text-center text-gray-300 mb-8">
                 Secure access to your AI defense system
               </motion.p>
-              
+
               <motion.div variants={itemVariants}>
-                <Input 
+                <Input
                   name="username"
-                  placeholder="Email" 
+                  placeholder="Email"
                   className="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
                 />
               </motion.div>
-              
+
               <motion.div variants={itemVariants}>
-                <Input 
+                <Input
                   name="password"
-                  type="password" 
-                  placeholder="Password" 
+                  type="password"
+                  placeholder="Password"
                   className="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
                 />
               </motion.div>
-              
+
               <motion.div variants={itemVariants}>
-                <Button 
+                <Button
                   type="submit"
                   className="w-full bg-gradient-to-r from-cyan-600 to-purple-600 text-white hover:from-cyan-500 hover:to-purple-500 py-3 shadow-lg shadow-cyan-500/20"
                 >
                   Authenticate
                 </Button>
               </motion.div>
-              
-              <motion.p 
-                variants={itemVariants} 
+
+              <motion.p
+                variants={itemVariants}
                 className="text-center text-sm text-gray-400 mt-8"
               >
                 New to the system?{' '}
-                <Link 
-                  to="/signup" 
+                <Link
+                  to="/signup"
                   className="text-cyan-400 hover:text-cyan-300 font-medium underline underline-offset-4"
                 >
                   Request access
@@ -185,7 +170,7 @@ const LoginPage = () => {
         <div className="hidden md:flex items-center justify-center p-10 relative overflow-hidden">
           {/* Background Gradient */}
           <div className="absolute inset-0 bg-gradient-to-tr from-cyan-900/30 via-purple-900/50 to-indigo-900/30" />
-          
+
           {/* Floating Orbs */}
           <motion.div
             className="absolute top-1/4 left-1/4 w-12 h-12 rounded-full bg-cyan-400/20 blur-xl"
@@ -197,9 +182,9 @@ const LoginPage = () => {
             variants={floatingOrbVariants}
             animate="float"
           />
-          
+
           {/* Main Animation */}
-          <motion.div 
+          <motion.div
             className="relative w-64 h-64"
             variants={floatingOrbVariants}
             animate="pulse"
@@ -216,7 +201,7 @@ const LoginPage = () => {
               initial="initial"
               animate="animate"
             />
-            
+
             {/* Inner Ring */}
             <motion.div
               className="absolute inset-8 rounded-full border-2 border-cyan-400/30"
@@ -229,7 +214,7 @@ const LoginPage = () => {
                 }
               }}
             />
-            
+
             {/* Core */}
             <div className="absolute inset-16 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center">
               <motion.div
@@ -246,7 +231,7 @@ const LoginPage = () => {
                 AI
               </motion.div>
             </div>
-            
+
             {/* Floating Particles */}
             {[...Array(8)].map((_, i) => (
               <motion.div

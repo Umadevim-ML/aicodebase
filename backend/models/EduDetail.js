@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 
 const eduDetailSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+  username: {
+    type: String,
+    required: true,
+    unique: true // Ensure one education record per user
   },
   educationLevel: {
     type: String,
@@ -22,12 +22,15 @@ const eduDetailSchema = new mongoose.Schema({
   },
   strongLanguages: {
     type: [String],
-    required: true
+    default: []
   },
   createdAt: {
     type: Date,
     default: Date.now
   }
 });
+
+// Add index on username for faster queries
+eduDetailSchema.index({ username: 1 });
 
 module.exports = mongoose.model('EduDetail', eduDetailSchema);

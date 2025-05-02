@@ -3,61 +3,73 @@ const router = express.Router();
 const EduDetail = require('../models/EduDetail');
 const { protect } = require('../middleware/authMiddleware');
 
+// POST survey data
 router.post('/', protect, async (req, res) => {
-  console.log("======== SURVEY SUBMISSION STARTED ========");
-  console.log("Headers:", req.headers);
-  console.log("Authenticated user:", req.user);
-  console.log("Incoming data:", req.body);
-
   try {
+    // Validate required fields
+    const { educationLevel, standard, codingLevel } = req.body;
+    if (!educationLevel || !standard || !codingLevel) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing required fields (educationLevel, standard, codingLevel)"
+      });
+    }
+
+    // Check if user already has education details
+    const existingDetails = await EduDetail.findOne({ username: req.user.username });
+    if (existingDetails) {
+      return res.status(400).json({
+        success: false,
+        error: "Education details already exist for this user"
+      });
+    }
+
+    // Create new survey with username
     const eduDetail = new EduDetail({
-      userId: req.user._id,
-      educationLevel: req.body.educationLevel,
-      standard: req.body.standard,
-      codingLevel: req.body.codingLevel,
-      strongLanguages: req.body.strongLanguages
+      username: req.user.username,
+      educationLevel,
+      standard,
+      codingLevel,
+      strongLanguages: req.body.strongLanguages || []
     });
 
-    console.log("Document to be saved:", eduDetail);
-
     const savedDetail = await eduDetail.save();
-    console.log("Successfully saved:", savedDetail);
-
+    
     res.status(201).json({
       success: true,
       data: savedDetail
     });
-    // Check for required fields
-    if (!req.body.educationLevel || !req.body.standard || !req.body.codingLevel || !req.body.strongLanguages) {
-      return res.status(400).json({
-        success: false,
-        error: "Missing required fields"
-      });
-    }
 
   } catch (error) {
-    console.error("SAVE ERROR:", error);
-
-    // Enhanced error logging
-    if (error.name === 'ValidationError') {
-      console.error("Validation errors:", error.errors);
-    }
-
+    console.error("Error saving survey:", error);
     res.status(500).json({
       success: false,
-      error: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      error: error.message
     });
   }
 });
 
-// Get education details for current user (protected)
-router.get('/me', protect, async (req, res) => {
+// GET current user's survey data
+router.get('/', protect, async (req, res) => {
   try {
-    const eduDetails = await EduDetail.findOne({ userId: req.user._id });
-    res.json(eduDetails);
+    const eduDetails = await EduDetail.findOne({ username: req.user.username });
+    
+    if (!eduDetails) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Education details not found' 
+      });
+    }
+
+    res.json({
+      success: true,
+      data: eduDetails
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: error.message 
+    });
   }
 });
 

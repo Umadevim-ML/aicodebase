@@ -9,7 +9,8 @@ const userSchema = new mongoose.Schema({
     unique: true,
     trim: true,
     minlength: 3,
-    maxlength: 30
+    maxlength: 30,
+    match: [/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores']
   },
   email: {
     type: String,
@@ -25,44 +26,72 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: [true, 'Please provide a password'],
-    minlength: 6,
-    select: false
+    minlength: 8,
+    select: false,
+    validate: {
+      validator: function(v) {
+        return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(v);
+      },
+      message: 'Password must contain at least one uppercase letter, one lowercase letter, and one number'
+    }
   },
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  strict: true // Rejects undefined fields
+});
 
-// Hash password before saving
+// Middleware to hash password before saving
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
   
   try {
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(12); // Increased salt rounds
     this.password = await bcrypt.hash(this.password, salt);
     next();
   } catch (err) {
-    next(err);
+    next(new Error('Password hashing failed: ' + err.message));
   }
 });
 
-// Generate JWT token
+// Instance method to generate JWT
 userSchema.methods.generateAuthToken = function() {
   try {
     if (!process.env.JWT_SECRET) {
-      throw new Error('JWT_SECRET is not defined');
+      throw new Error('JWT_SECRET is not configured');
     }
+
     return jwt.sign(
-      { id: this._id },
+      {
+        userId: this._id,
+        email: this.email,
+        role: 'user' // You can add roles later
+      },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRE || '30d' }
+      {
+        expiresIn: process.env.JWT_EXPIRE || '1d',
+        algorithm: 'HS256',
+        issuer: 'your-app-name'
+      }
     );
   } catch (err) {
-    console.error('Token generation error:', err);
-    throw err;
+    console.error('JWT Generation Error:', err);
+    throw new Error('Authentication token generation failed');
   }
 };
 
-// Compare passwords
-userSchema.methods.comparePassword = async function(enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
+// Instance method to compare passwords
+userSchema.methods.comparePassword = async function(candidatePassword) {
+  try {
+    if (!candidatePassword) {
+      throw new Error('No password provided for comparison');
+    }
+    return await bcrypt.compare(candidatePassword, this.password);
+  } catch (err) {
+    console.error('Password Comparison Error:', err);
+    throw new Error('Password verification failed');
+  }
 };
 
-module.exports = mongoose.model('User', userSchema);
+const User = mongoose.model('User', userSchema);
+
+module.exports = User;
