@@ -22,6 +22,7 @@ const Dashboard = () => {
   const handleLogout = () => {
     localStorage.removeItem('currentUser');
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     navigate('/');
     window.location.reload();
   };
@@ -157,7 +158,7 @@ const Dashboard = () => {
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">
-            Welcome to your Dashboard, {currentUser?.fullName || 'User'}!
+            Welcome to your Dashboard, {currentUser?.username || 'User'}!
           </h1>
           <Button 
             onClick={handleLogout}

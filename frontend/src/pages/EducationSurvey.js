@@ -182,12 +182,15 @@ const EducationSurvey = () => {
     setError(null);
     
     try {
+      console.log('Form data before validation:', formData); // Debug log
+      
       // Validate required fields
       if (!formData.educationLevel || !formData.standard || !formData.codingLevel) {
         throw new Error('Please fill all required fields');
       }
   
       const token = localStorage.getItem('token');
+      console.log('Token from localStorage:', token); // Debug log
       if (!token) {
         throw new Error('Authentication token not found. Please login again.');
       }
@@ -198,6 +201,7 @@ const EducationSurvey = () => {
         codingLevel: formData.codingLevel,
         strongLanguages: formData.strongLanguages
       };
+      console.log('Payload being sent:', payload); // Debug log
   
       const response = await fetch('http://localhost:5000/api/edu-details', {
         method: 'POST',
@@ -208,7 +212,10 @@ const EducationSurvey = () => {
         body: JSON.stringify(payload)
       });
   
+      console.log('Response status:', response.status); // Debug log
+      
       const data = await response.json();
+      console.log('Response data:', data); // Debug log
   
       if (!response.ok) {
         // Handle specific error messages from backend
@@ -223,7 +230,7 @@ const EducationSurvey = () => {
       }
   
       // Success - redirect to dashboard
-      navigate('/dashboard', { 
+      navigate('/', { 
         state: { 
           surveyCompleted: true,
           message: 'Profile completed successfully!' 
@@ -231,7 +238,7 @@ const EducationSurvey = () => {
       });
   
     } catch (error) {
-      console.error('Survey submission error:', error);
+      console.error('Full survey submission error:', error); // More detailed error log
       setError(error.message || 'Failed to submit survey. Please try again.');
       
       // If unauthorized, clear storage and redirect to login
