@@ -182,15 +182,21 @@ const EducationSurvey = () => {
     setError(null);
     
     try {
+<<<<<<< HEAD
       console.log('Form data before validation:', formData); // Debug log
       
+=======
+>>>>>>> fc901a2f73a2dc9a889da4e38fea05c263495d30
       // Validate required fields
       if (!formData.educationLevel || !formData.standard || !formData.codingLevel) {
         throw new Error('Please fill all required fields');
       }
   
       const token = localStorage.getItem('token');
+<<<<<<< HEAD
       console.log('Token from localStorage:', token); // Debug log
+=======
+>>>>>>> fc901a2f73a2dc9a889da4e38fea05c263495d30
       if (!token) {
         throw new Error('Authentication token not found. Please login again.');
       }
@@ -201,7 +207,10 @@ const EducationSurvey = () => {
         codingLevel: formData.codingLevel,
         strongLanguages: formData.strongLanguages
       };
+<<<<<<< HEAD
       console.log('Payload being sent:', payload); // Debug log
+=======
+>>>>>>> fc901a2f73a2dc9a889da4e38fea05c263495d30
   
       const response = await fetch('http://localhost:5000/api/edu-details', {
         method: 'POST',
@@ -212,10 +221,14 @@ const EducationSurvey = () => {
         body: JSON.stringify(payload)
       });
   
+<<<<<<< HEAD
       console.log('Response status:', response.status); // Debug log
       
       const data = await response.json();
       console.log('Response data:', data); // Debug log
+=======
+      const data = await response.json();
+>>>>>>> fc901a2f73a2dc9a889da4e38fea05c263495d30
   
       if (!response.ok) {
         // Handle specific error messages from backend
@@ -230,7 +243,11 @@ const EducationSurvey = () => {
       }
   
       // Success - redirect to dashboard
+<<<<<<< HEAD
       navigate('/', { 
+=======
+      navigate('/dashboard', { 
+>>>>>>> fc901a2f73a2dc9a889da4e38fea05c263495d30
         state: { 
           surveyCompleted: true,
           message: 'Profile completed successfully!' 
@@ -238,7 +255,11 @@ const EducationSurvey = () => {
       });
   
     } catch (error) {
+<<<<<<< HEAD
       console.error('Full survey submission error:', error); // More detailed error log
+=======
+      console.error('Survey submission error:', error);
+>>>>>>> fc901a2f73a2dc9a889da4e38fea05c263495d30
       setError(error.message || 'Failed to submit survey. Please try again.');
       
       // If unauthorized, clear storage and redirect to login
