@@ -86,9 +86,6 @@ const LoginPage = () => {
       const userResponse = await fetch('http://localhost:5000/api/auth/me', {
         headers: { 'Authorization': `Bearer ${data.token}` }
       });
-      const userData = await userResponse.json();
-      
-      
       navigate('/dashboard');
   
     } catch (error) {

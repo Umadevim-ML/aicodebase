@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Buddy</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>code AI</h1>
+    <p id="username-display" style="text-align: center; font-weight: bold; color: #ffffff; margin-top: -10px;font-size: 30px;"></p>
+
+    <div id="chat-container"></div>
+    <div class="input-area">
+        <input type="text" id="user-input" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
+        
+        <button id="attachment-btn" class="icon-btn" onclick="triggerFileInput()" title="Attach file">
+            <i class="fas fa-paperclip"></i>
+        </button>
+        <button id="audio-btn" class="icon-btn" onclick="toggleAudioRecording()" title="Voice message">
+            <i class="fas fa-microphone"></i>
+        </button>
+        
+        <button id="send-btn" onclick="sendMessage()">Send</button>
+        
+        <input type="file" id="file-input" style="display: none;" onchange="handleFileSelection(this)">
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const username = localStorage.getItem('username');
+            if (username) {
+                document.getElementById('username-display').textContent = `Welcome, ${username}!`;
+            }
+        });
+
+        const params = new URLSearchParams(window.location.search);
+        const username = params.get('username');
+        if (username) {
+            localStorage.setItem('username', username);
+            console.log('Username stored:', username);
+        }
+    </script>
+</body>
+</html>

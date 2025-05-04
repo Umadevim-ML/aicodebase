@@ -1,0 +1,246 @@
+:root {
+    --bg-color: #1a1a2e;
+    --card-bg: #16213e;
+    --accent-color: #0f3460;
+    --text-color: #e0e0e0;
+    --user-msg-bg: #4361ee;
+    --bot-msg-bg: #2d2d44;
+    --input-bg: #1f1f35;
+    --button-bg: #4361ee;
+    --button-hover: #3a56de;
+    --code-bg: #282c34;
+    --copy-btn-bg: #3a3f4b;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+h1 {
+    margin: 20px 0;
+    font-size: 32px;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(67, 97, 238, 0.5);
+}
+
+#chat-container {
+    width: 100%;
+    max-width: 1000px;
+    height: 70vh;
+    background-color: var(--card-bg);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 15px;
+    overflow-y: auto;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+}
+
+.message {
+    margin: 8px 0;
+    padding: 12px 15px;
+    border-radius: 18px;
+    max-width: 80%;
+    word-wrap: break-word;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.user {
+    background: var(--user-msg-bg);
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 5px;
+    margin-left: auto;
+}
+
+.bot {
+    background: var(--bot-msg-bg);
+    color: var(--text-color);
+    align-self: flex-start;
+    border-bottom-left-radius: 5px;
+    margin-right: auto;
+}
+
+.input-area {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+#user-input {
+    flex-grow: 1;
+    padding: 15px;
+    border: none;
+    border-radius: 10px 0 0 10px;
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    font-size: 16px;
+    outline: none;
+    transition: all 0.3s;
+}
+
+#user-input:focus {
+    box-shadow: 0 0 0 2px var(--accent-color);
+}
+
+button {
+    padding: 15px 25px;
+    background-color: var(--button-bg);
+    color: white;
+    border: none;
+    border-radius: 0 10px 10px 0;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: var(--button-hover);
+}
+
+/* Custom scrollbar */
+#chat-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+#chat-container::-webkit-scrollbar-track {
+    background: var(--card-bg);
+}
+
+#chat-container::-webkit-scrollbar-thumb {
+    background-color: var(--accent-color);
+    border-radius: 10px;
+}
+
+/* Input area buttons */
+.icon-btn {
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    border: none;
+    border-radius: 0;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.icon-btn:hover {
+    background-color: var(--accent-color);
+}
+
+#attachment-btn {
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#audio-btn {
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#audio-btn.recording {
+    background-color: #e63946;
+    animation: pulse 1.5s infinite;
+}
+
+#send-btn {
+    border-radius: 0 10px 10px 0;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(230, 57, 70, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0); }
+}
+
+/* Code blocks styling */
+.code-container {
+    position: relative;
+    margin: 10px 0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.code-block {
+    background: var(--code-bg);
+    padding: 15px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    white-space: pre;
+    margin: 0;
+}
+
+.copy-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: var(--copy-btn-bg);
+    color: var(--text-color);
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    opacity: 0.7;
+}
+
+.copy-btn:hover {
+    opacity: 1;
+    background: var(--accent-color);
+}
+
+.copy-btn.copied {
+    background: #4CAF50;
+    opacity: 1;
+}
+
+/* Mobile optimizations */
+@media (max-width: 600px) {
+    h1 {
+        font-size: 26px;
+        margin: 15px 0;
+    }
+    
+    #chat-container {
+        height: 50vh;
+        padding: 15px;
+    }
+    
+    .message {
+        padding: 10px 12px;
+        max-width: 85%;
+    }
+    
+    #user-input {
+        padding: 12px;
+        font-size: 14px;
+    }
+    
+    button {
+        padding: 12px 20px;
+        font-size: 14px;
+    }
+}

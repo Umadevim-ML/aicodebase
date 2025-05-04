@@ -73,7 +73,7 @@ router.post('/login', async (req, res) => {
   try {
     const user = await User.findOne({ email: email.toLowerCase().trim() })
                            .select('+password');
-
+    
     if (!user || !(await user.comparePassword(password))) {
       return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }

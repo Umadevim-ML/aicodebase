@@ -10,75 +10,115 @@ const Dashboard = () => {
   const [userInput, setUserInput] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [userDetails, setUserDetails] = useState(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const chatContainerRef = useRef(null);
   const fileInputRef = useRef(null);
-  
-  // Safely get and parse currentUser
-  const currentUserString = localStorage.getItem('currentUser');
+ 
+  const currentUserString = localStorage.getItem('user');
   const currentUser = currentUserString ? JSON.parse(currentUserString) : null;
+
+  // Fetch user details on component mount
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      if (!currentUser?.username) return;
+      
+      try {
+        const response = await fetch(`http://127.0.0.1:8000/api/user/${currentUser.username}`, {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setUserDetails(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch user details:', error);
+      }
+    };
+
+    fetchUserDetails();
+  }, [currentUser?.username]);
 
   const handleLogout = () => {
     localStorage.removeItem('currentUser');
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-
     navigate('/');
     window.location.reload();
   };
 
-  // Toggle chat visibility
   const toggleChat = () => {
     setIsChatOpen(!isChatOpen);
   };
 
-  // Handle sending messages
-  const sendMessage = () => {
+  const appendMessage = (text, sender) => {
+    setMessages(prev => [...prev, { text, sender }]);
+  };
+  const sendMessage = async () => {
     const trimmedInput = userInput.trim();
     if (!trimmedInput && !selectedFile) return;
-
+  
+    // Add user message to chat
     if (trimmedInput) {
       appendMessage(trimmedInput, 'user');
       setUserInput('');
     }
-
+  
     // Keep the chat panel open
     setIsChatOpen(true);
-
-    // Here you would typically send the message to your backend
-    // For now, we'll just simulate a bot response
-    if (selectedFile) {
-      const isImage = selectedFile.type.startsWith('image/');
-      appendMessage(isImage ? '🧠 Processing your image...' : '🧠 Processing your file...', 'bot');
-      
-      // Simulate backend response
-      setTimeout(() => {
-        setMessages(prev => {
-          const newMessages = [...prev];
-          // Remove the "Processing..." message
-          newMessages.pop();
-          // Add the response
-          newMessages.push({ text: '🤖 I received your file!', sender: 'bot' });
-          return newMessages;
+  
+    try {
+      let body;
+      let headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      };
+  
+      if (selectedFile) {
+        // Use FormData for file uploads
+        const formData = new FormData();
+        if (trimmedInput) formData.append('query', trimmedInput);
+        formData.append('file', selectedFile);
+        if (currentUser?.username) formData.append('username', currentUser.username);
+        body = formData;
+        // Let browser set Content-Type with boundary for FormData
+        headers = {};
+      } else {
+        // Use JSON for text-only messages
+        body = JSON.stringify({
+          query: trimmedInput,
+          username: currentUser?.username
         });
-      }, 1500);
+      }
+  
+      const response = await fetch('http://127.0.0.1:8000/api/chat', {
+        method: 'POST',
+        body: body,
+        headers: headers,
+        credentials: 'include'
+      });
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+  
+      const data = await response.json();
       
+      if (data.transcribed) {
+        appendMessage(`🎤 You said: ${data.transcribed}`, 'user');
+      }
+      
+      if (data.response) {
+        appendMessage(data.response, 'bot');
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      appendMessage(`🤖 Error: ${error.message}`, 'bot');
+    } finally {
       setSelectedFile(null);
-    } else {
-      // Simulate bot response for text messages
-      setTimeout(() => {
-        appendMessage('🤖 Thanks for your message!', 'bot');
-      }, 500);
     }
-};
-
-  // Append message to chat
-  const appendMessage = (text, sender) => {
-    setMessages(prev => [...prev, { text, sender }]);
   };
-
-  // Handle file selection
   const handleFileSelection = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -96,19 +136,16 @@ const Dashboard = () => {
     }
   };
 
-  // Trigger file input
   const triggerFileInput = () => {
     fileInputRef.current.click();
   };
 
-  // Handle key press (Enter to send)
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       sendMessage();
     }
   };
 
-  // Audio recording functions
   const toggleAudioRecording = async () => {
     if (!isRecording) {
       try {
@@ -116,27 +153,55 @@ const Dashboard = () => {
         setIsRecording(true);
         audioChunksRef.current = [];
         
-        const mediaRecorder = new MediaRecorder(stream);
+        const mediaRecorder = new MediaRecorder(stream, {
+          mimeType: 'audio/webm'
+        });
         mediaRecorderRef.current = mediaRecorder;
         
         mediaRecorder.ondataavailable = (e) => {
-          audioChunksRef.current.push(e.data);
+          if (e.data.size > 0) {
+            audioChunksRef.current.push(e.data);
+          }
         };
         
-        mediaRecorder.onstop = () => {
-          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-          // Here you would send the audio to your backend
-          appendMessage('🎤 Voice message sent', 'user');
-          // Simulate processing
-          setTimeout(() => {
-            appendMessage('🤖 I heard your voice message!', 'bot');
-          }, 1500);
+        mediaRecorder.onstop = async () => {
+          try {
+            const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+            const formData = new FormData();
+            formData.append('file', audioBlob, 'recording.webm');
+            if (currentUser?.username) formData.append('username', currentUser.username);
+            
+            appendMessage('🎤 Processing your voice message...', 'bot');
+            
+            const response = await fetch('http://127.0.0.1:8000/api/chat', {
+              method: 'POST',
+              body: formData,
+              credentials: 'include'
+            });
+            
+            if (!response.ok) throw new Error('Failed to process audio');
+            
+            const data = await response.json();
+            setMessages(prev => prev.filter(m => m.text !== '🎤 Processing your voice message...'));
+            
+            if (data.transcribed) {
+              appendMessage(`🎤 You said: ${data.transcribed}`, 'user');
+            }
+            
+            if (data.response) {
+              appendMessage(data.response, 'bot');
+            }
+          } catch (error) {
+            console.error('Error sending audio:', error);
+            appendMessage('🤖 Failed to process audio. Please try again.', 'bot');
+          }
         };
         
-        mediaRecorder.start();
+        mediaRecorder.start(1000); // Collect data every second
       } catch (error) {
         console.error('Error accessing microphone:', error);
         appendMessage('Could not access microphone. Please check permissions.', 'bot');
+        setIsRecording(false);
       }
     } else {
       setIsRecording(false);
@@ -159,11 +224,7 @@ const Dashboard = () => {
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">
-<<<<<<< HEAD
             Welcome to your Dashboard, {currentUser?.username || 'User'}!
-=======
-            Welcome to your Dashboard, {currentUser?.fullName || 'User'}!
->>>>>>> fc901a2f73a2dc9a889da4e38fea05c263495d30
           </h1>
           <Button 
             onClick={handleLogout}
@@ -174,10 +235,16 @@ const Dashboard = () => {
         </div>
         
         <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+          {userDetails && (
+            <div className="text-gray-300 mb-4">
+              <p>Education: {userDetails.educationLevel} {userDetails.standard}</p>
+              <p>Coding Level: {userDetails.codingLevel}</p>
+              <p>Strong Languages: {userDetails.strongLanguages.join(', ')}</p>
+            </div>
+          )}
           <p className="text-gray-300">
-            You're now logged in.
+            You're now logged in. Click the chatbot icon to get personalized coding help!
           </p>
-          {/* Add more dashboard content here */}
         </div>
       </div>
 
@@ -200,10 +267,17 @@ const Dashboard = () => {
         <div className="h-full flex flex-col border-l border-gray-700">
           {/* Chat header */}
           <div className="bg-gray-900 p-4 flex justify-between items-center border-b border-gray-700">
-            <h2 className="text-xl font-semibold text-white flex items-center">
-              <FaRobot className="mr-2 text-cyan-400" />
-              Code AI Assistant
-            </h2>
+            <div>
+              <h2 className="text-xl font-semibold text-white flex items-center">
+                <FaRobot className="mr-2 text-cyan-400" />
+                {userDetails ? `${userDetails.username}'s Assistant` : 'Code AI Assistant'}
+              </h2>
+              {userDetails && (
+                <div className="text-xs text-gray-400 mt-1">
+                  {userDetails.educationLevel} • {userDetails.codingLevel} • {userDetails.strongLanguages.join(', ')}
+                </div>
+              )}
+            </div>
             <button 
               onClick={toggleChat}
               className="text-gray-400 hover:text-white p-1 rounded-full"
@@ -274,6 +348,7 @@ const Dashboard = () => {
                 ref={fileInputRef}
                 onChange={handleFileSelection}
                 className="hidden"
+                accept=".txt,.pdf,.docx,.py,.java,.c,.cpp,.js,.ts,.go,.rs,.rb,.php,.jpg,.jpeg,.png,.gif,.bmp,.mp3,.wav,.m4a,.ogg"
               />
               <button
                 onClick={toggleAudioRecording}
