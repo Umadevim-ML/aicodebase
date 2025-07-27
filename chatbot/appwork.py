@@ -42,7 +42,7 @@ CORS(app,
              "supports_credentials": True
          }
      })
-uri = "mongodb+srv://nexus:12345@codepilot.vd44f24.mongodb.net/?retryWrites=true&w=majority&appName=codepilot"
+uri = "your mongo db connection string via env"
 mclient = MongoClient(uri)
 db=mclient.test
 print("Successfully connected to MongoDB!")
